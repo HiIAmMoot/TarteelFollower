@@ -61,44 +61,27 @@ recording = False
 searching = False
 
 # Function to check if a color is within a specified range
-def is_color_within_range(color, target_color):
-    return all(abs(color[i] - target_color[i]) <= color_tolerance for i in range(1))
-
-# Function to find the bounding box of the color region
-def find_color_region(image, target_color, tolerance):
-    width, height = image.size
-    left, top, right, bottom = width, height, 0, 0
-    
-    for x in range(width):
-        for y in range(height):
-            pixel_color = image.getpixel((x, y))
-            if is_color_within_range(pixel_color, target_color):
-                left = min(left, x)
-                top = min(top, y)
-                right = max(right, x)
-                bottom = max(bottom, y)
-    
-    if right < left or bottom < top:
-        return None  # No region found
-    
-    return left, top, right, bottom
-
+def is_color_within_range(color, target_color, grayscale):
+    color_range = 1
+    if not grayscale:
+        color_range = 3
+    return all(abs(color[i] - target_color[i]) <= color_tolerance for i in range(color_range))
 
 # Function to find the coordinates of the first pixel with at least two neighboring pixels of the specified color
-def find_first_pixel_with_color(image, target_color):
+def find_first_pixel_with_color(image, target_color, grayscale):
     height, width = image.shape[:2]
 
     for y in range(height - 1):
         for x in range(width - 1):
             pixel_color = image[y, x]
-            if is_color_within_range(pixel_color, target_color):
+            if is_color_within_range(pixel_color, target_color, grayscale):
                 # Check if at least two neighboring pixels have the same color
                 neighbor_colors = [
                     image[y, x + 1],
                     image[y + 1, x],
-                    image[y + 1, x + 1]
+                    #image[y + 1, x + 1]
                 ]
-                if sum(is_color_within_range(neighbor_color, target_color) for neighbor_color in neighbor_colors) >= 2:
+                if sum(is_color_within_range(neighbor_color, target_color, grayscale) for neighbor_color in neighbor_colors) >= 2:
                     #print(x)
                     #print(y)
                     return x, y, True
@@ -113,7 +96,7 @@ def check_searching(screenshot):
     for x in range(cropped_image.width):
         for y in range(cropped_image.height):
             pixel_color = cropped_image.getpixel((x, y))
-            if is_color_within_range(pixel_color, search_color):
+            if is_color_within_range(pixel_color, search_color, False):
                 return True
     return False
 
@@ -241,12 +224,11 @@ def run():
         frame = np.array(sct_img)
 
         # Find the coordinates of the first pixel with the specified color
-        first_pixel = find_first_pixel_with_color(frame, word_highlight_color)
+        first_pixel = find_first_pixel_with_color(frame, word_highlight_color, True)
         x, y, success = first_pixel
         if success:
             # Extract the coordinates of the bounding box around the detected pixel
-
-            left = max(0, x - 50)  # Adjust as needed for the desired crop size            
+            left = 0
             width = bounding_box['width']
             height = ayah_height
             top = y
