@@ -209,7 +209,7 @@ def run():
     check_timestamp = time.time();
     while(True):
         timestamp = time.time();
-        if check_timestamp - timestamp > check_time:
+        if timestamp - check_timestamp > check_time:
             check_timestamp = timestamp
             # Check for the image and click if necessary
             check_image_and_click(image_path, click_location)
