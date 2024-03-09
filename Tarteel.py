@@ -72,7 +72,7 @@ def find_color_region(image, target_color, tolerance):
     for x in range(width):
         for y in range(height):
             pixel_color = image.getpixel((x, y))
-            if is_color_within_range(pixel_color, target_color, tolerance):
+            if is_color_within_range(pixel_color, target_color):
                 left = min(left, x)
                 top = min(top, y)
                 right = max(right, x)
@@ -113,7 +113,7 @@ def check_searching(screenshot):
     for x in range(cropped_image.width):
         for y in range(cropped_image.height):
             pixel_color = cropped_image.getpixel((x, y))
-            if is_color_within_range(pixel_color, search_color, color_tolerance):
+            if is_color_within_range(pixel_color, search_color):
                 return True
     return False
 
