@@ -4,7 +4,7 @@ import pyautogui
 import win32gui
 import win32con
 import subprocess
-#from PIL import Image
+
 import cv2
 import os
 
@@ -119,7 +119,8 @@ def check_searching(screenshot):
 
 
 def make_window_always_on_top(window_title):
-    return
+    if test:
+        return
     try:
         window = gw.getWindowsWithTitle(window_title)[0]
         hwnd = win32gui.FindWindow(None, window.title)
@@ -129,7 +130,8 @@ def make_window_always_on_top(window_title):
         print(f"Window with title '{window_title}' not found.")
 
 def set_window_size_and_position(window_title, width, height, x, y):
-    return 1
+    if test:
+        return 1
     try:
         window = gw.getWindowsWithTitle(window_title)[0]
         window.resizeTo(width, height)
@@ -140,7 +142,8 @@ def set_window_size_and_position(window_title, width, height, x, y):
     return 1
 
 def get_window_size_and_position(window_title):
-    return None
+    if test:
+        return None
     try:
         window = gw.getWindowsWithTitle(window_title)[0]
         width, height = window.width, window.height
@@ -274,9 +277,3 @@ def run():
         
 if __name__ == "__main__":
     run()
-
-
-
-
-
-
