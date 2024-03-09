@@ -1,0 +1,7 @@
+pygetwindow
+pyautogui
+pywin32
+opencv-python
+numpy
+mss
+configparser
