@@ -155,8 +155,8 @@ def get_window_size_and_position(window_title):
 
 def check_image_and_click(image_path, click_location):
     global recording
-    recording = True
     if test:
+        recording = True
         return
     # Attempt to locate the image on the screen
     try:
