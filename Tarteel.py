@@ -192,8 +192,7 @@ def run():
     
         if window_info:
             print(f"Window size and position: {window_info}")
-        mouse_x, mouse_y = pyautogui.position()
-    
+
         # Get current mouse position
         mouse_x, mouse_y = pyautogui.position()
     
@@ -253,7 +252,7 @@ def run():
 
         # Find the coordinates of the first pixel with the specified color
         try:
-            first_pixel = find_first_pixel_with_color(frame, word_highlight_color, True)
+            first_pixel = find_first_pixel_with_color(frame, word_highlight_color, False)
             x, y, success = first_pixel
             if success:
                 # Extract the coordinates of the bounding box around the detected pixel
