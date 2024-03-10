@@ -14,6 +14,9 @@ import configparser
 
 #import detect_pixel
 
+# Disable the pyautogui failsafe feature
+pyautogui.FAILSAFE = False
+
 # Create a ConfigParser object and read the config file
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -22,12 +25,17 @@ config.read('config.ini')
 local_appdata = os.getenv('LOCALAPPDATA')
 test = True
 
+initalized = False
+recording = False
+searching = False
+
 config_name = "DEFAULT"
 if test:
     config_name = "TEST"
     
 # Get values from the config file
 tarteel_path = os.path.join(local_appdata, config[config_name]["tarteel_path"])
+print(tarteel_path)
 tarteel_window_dimensions = eval(config[config_name]["tarteel_window_dimensions"]) # Width and height of the Tarteel window
 tarteel_window_location = eval(config[config_name]["tarteel_window_location"]) # Location of the Tarteel window
 quran_region = eval(config[config_name]["quran_region"]) # Screen coordinates of the quran text (left, upper, right, lower)
@@ -54,11 +62,6 @@ def start():
         subprocess.run(command_line, check=True)
     except subprocess.CalledProcessError as e:
         print(f"Error: {e}")
-
-
-initalized = False
-recording = False
-searching = False
 
 # Function to check if a color is within a specified range
 def is_color_within_range(color, target_color, grayscale):
@@ -149,112 +152,147 @@ def check_image_and_click(image_path, click_location):
     except:
         recording = False
         print("Image not found. Clicking at the specified location.")
+        click_location_and_return(click_location)
+
+def click_location_and_return(click_location):
+    # Store the current mouse position
+    original_mouse_position = pyautogui.position()
+    
+    try:
+        # Click at the specific location
         pyautogui.click(click_location)
+    finally:
+        # Restore the original mouse position
+        pyautogui.moveTo(original_mouse_position)
+
 
 def run():
     global initialized
     global searching
-    # Specify the title of the window you want to resize and move
-    target_window_title = "Tarteel"
-
-    # Specify the size and position you want to set
-    window_width, window_height = tarteel_window_dimensions
-    window_x, window_y = tarteel_window_location
-
-    # Set window size and position
-    success = set_window_size_and_position(target_window_title, window_width, window_height, window_x, window_y)
     
-    if not success:
-        start()
-        time.sleep(10)
-
-    initalized = True
-
-    # Get window size and position
-    window_info = get_window_size_and_position(target_window_title)
-
-    if window_info:
-        print(f"Window size and position: {window_info}")
-    mouse_x, mouse_y = pyautogui.position()
-
-    # Get current mouse position
-    mouse_x, mouse_y = pyautogui.position()
+    try:
+    # Specify the title of the window we want to resize and move
+        target_window_title = "Tarteel"
     
-    # Print the coordinates
-    print(f"Mouse coordinates: x={mouse_x}, y={mouse_y}")
+        # Specify the size and position you want to set
+        window_width, window_height = tarteel_window_dimensions
+        window_x, window_y = tarteel_window_location
+    
+        # Set window size and position
+        success = set_window_size_and_position(target_window_title, window_width, window_height, window_x, window_y)
+        
+        if not success:
+            start()
+            time.sleep(10)
+    
+        initalized = True
+    
+        # Get window size and position
+        window_info = get_window_size_and_position(target_window_title)
+    
+        if window_info:
+            print(f"Window size and position: {window_info}")
+        mouse_x, mouse_y = pyautogui.position()
+    
+        # Get current mouse position
+        mouse_x, mouse_y = pyautogui.position()
+    
+        # Print the coordinates
+        print(f"Mouse coordinates: x={mouse_x}, y={mouse_y}")
+            
+        # Specify the path to your PNG image
+        image_path = "Record.png"
+        
+        should_check = True
+        check_timestamp = time.time()
+    except:
+        print("Init failed!")
 
     #make_window_always_on_top(target_window_title)
-    
-    # Specify the path to your PNG image
-    image_path = "Record.png"
-    
-    should_check = True
-    check_timestamp = time.time();
-    while(True):
-        timestamp = time.time();
-        if timestamp - check_timestamp > check_time:
-            check_timestamp = timestamp
-            # Check for the image and click if necessary
-            check_image_and_click(image_path, click_location)
-            
-            # Capture screenshot of the screen
-            screenshot = pyautogui.screenshot()
-            
-            if recording:
-                searching = check_searching(screenshot)
-            
-                if searching:
-                    print("Tarteel is searching..")
-                    time.sleep(10)
-                    searching = check_searching(screenshot)
-                    if searching:
-                        # Stop recording
-                        pyautogui.click(click_location)
-                else:
-                    print("Tarteel is not searching")
-        
-        bounding_box = {'top': quran_region[0], 'left': quran_region[1], 'width': quran_region[2], 'height': quran_region[3]}
-        
-        sct = mss()      
-        
-        # Capture the screen region
-        sct_img = sct.grab(bounding_box)
 
-        # Convert the screen capture to a NumPy array
-        frame = np.array(sct_img)
+    while(True):
+        try:
+            timestamp = time.time();
+            if timestamp - check_timestamp > check_time:
+                check_timestamp = timestamp
+                # Check for the image and click if necessary
+                check_image_and_click(image_path, click_location)
+                
+                # Capture screenshot of the screen
+                screenshot = pyautogui.screenshot()
+                
+                if recording:
+                    searching = check_searching(screenshot)
+                
+                    if searching:
+                        print("Tarteel is searching..")
+                        time.sleep(10)
+                        searching = check_searching(screenshot)
+                        if searching:
+                            # Stop recording
+                            click_location_and_return(click_location)
+                    else:
+                        print("Tarteel is not searching")
+        except:
+            print("Recording and searching failed!")
+            break
+        
+        try:
+            bounding_box = {'top': quran_region[0], 'left': quran_region[1], 'width': quran_region[2], 'height': quran_region[3]}
+            
+            sct = mss()      
+            
+            # Capture the screen region
+            sct_img = sct.grab(bounding_box)
+    
+            # Convert the screen capture to a NumPy array
+            frame = np.array(sct_img)
+        except:
+            print("Getting frame failed!")
+            break
 
         # Find the coordinates of the first pixel with the specified color
-        first_pixel = find_first_pixel_with_color(frame, word_highlight_color, True)
-        x, y, success = first_pixel
-        if success:
-            # Extract the coordinates of the bounding box around the detected pixel
-            left = 0
-            width = bounding_box['width']
-            height = ayah_height
-            top = y
-            
-            # Crop the region around the detected pixel
-            cropped_frame = frame[top:top + height, left:left + width]
-    
-            # Display the cropped frame
-            cv2.imshow('Tarteel Processed', cropped_frame)
-        else:
-            image = np.zeros((ayah_height, bounding_box["width"], 3), np.uint8)
-            # Since OpenCV uses BGR, convert the color first
-            color = tuple(reversed(background_color))
-            # Fill image with color
-            image[:] = color
-            # Display the cropped frame
-            cv2.imshow('Tarteel Processed', image)
-    
-        # Check for key press to exit
-        if (cv2.waitKey(1) & 0xFF) == ord('q'):
-            cv2.destroyAllWindows()
+        try:
+            first_pixel = find_first_pixel_with_color(frame, word_highlight_color, True)
+            x, y, success = first_pixel
+            if success:
+                # Extract the coordinates of the bounding box around the detected pixel
+                left = 0
+                width = bounding_box['width']
+                height = ayah_height
+                top = y
+                
+                # Crop the region around the detected pixel
+                cropped_frame = frame[top:top + height, left:left + width]
+        
+                # Display the cropped frame
+                cv2.imshow('Tarteel Processed', cropped_frame)
+            else:
+                image = np.zeros((ayah_height, bounding_box["width"], 3), np.uint8)
+                # Since OpenCV uses BGR, convert the color first
+                color = tuple(reversed(background_color))
+                # Fill image with color
+                image[:] = color
+                # Display the cropped frame
+                cv2.imshow('Tarteel Processed', image)
+        except:
+            print("Finding highlight failed!")
+            break
+        try:
+            # Check for key press to exit
+            if (cv2.waitKey(1) & 0xFF) == ord('q'):
+                cv2.destroyAllWindows()
+                break
+        except:
+            print("Keypress failed!")
             break
     
     # Wait
-    time.sleep(check_time)
-    
+    try:
+        time.sleep(check_time)
+    except:
+        print("Wait failed!")
+        
     run()
         
 if __name__ == "__main__":
