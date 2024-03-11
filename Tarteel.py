@@ -169,6 +169,7 @@ def click_location_and_return(click_location):
 def run():
     global initialized
     global searching
+    global recording
     
     try:
     # Specify the title of the window we want to resize and move
@@ -208,7 +209,8 @@ def run():
         print("Init failed!")
 
     #make_window_always_on_top(target_window_title)
-
+    previous_pixel = [0, 0];
+    stuck_count = 0
     while(True):
         try:
             timestamp = time.time();
@@ -225,10 +227,12 @@ def run():
                 
                     if searching:
                         print("Tarteel is searching..")
-                        time.sleep(10)
+                        time.sleep(5)
                         searching = check_searching(screenshot)
                         if searching:
                             # Stop recording
+                            check_timestamp = 0
+                            recording = False
                             click_location_and_return(click_location)
                     else:
                         print("Tarteel is not searching")
@@ -246,8 +250,9 @@ def run():
     
             # Convert the screen capture to a NumPy array
             frame = np.array(sct_img)
-        except:
+        except Exception as e:
             print("Getting frame failed!")
+            print(e)
             break
 
         # Find the coordinates of the first pixel with the specified color
@@ -255,6 +260,21 @@ def run():
             first_pixel = find_first_pixel_with_color(frame, word_highlight_color, False)
             x, y, success = first_pixel
             if success:
+                
+                if stuck_count > 120:
+                    # Stop recording
+                    stuck_count = 0
+                    check_timestamp = 0
+                    recording = False
+                    click_location_and_return(click_location)
+                    continue
+                
+                if previous_pixel[0] == x and previous_pixel[1] == y:
+                    stuck_count += 1
+                    
+                previous_pixel = [x, y]
+                    
+                
                 # Extract the coordinates of the bounding box around the detected pixel
                 left = 0
                 width = bounding_box['width']
@@ -274,8 +294,9 @@ def run():
                 image[:] = color
                 # Display the cropped frame
                 cv2.imshow('Tarteel Processed', image)
-        except:
+        except Exception as e:
             print("Finding highlight failed!")
+            print(e)
             break
         try:
             # Check for key press to exit
